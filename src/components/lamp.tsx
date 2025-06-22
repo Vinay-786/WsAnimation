@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
-import { cn } from "../lib/utils"; 
+import { cn } from "../lib/utils";
 
 export const LampContainer = ({
   children,
@@ -20,16 +20,23 @@ export const LampContainer = ({
     >
       <div className="relative flex w-full flex-1 scale-y-125 items-center justify-center isolate z-0 ">
         <motion.div
-          initial={{ width: "0rem" }}
-          animate={isAnimating ? { width: "30rem" } : { width: "0rem" }}
-          transition={{
-            delay: isAnimating ? 0.3 : 0,
-            duration: 0.8,
-            ease: "circInOut",
-            repeat: isAnimating ? Infinity : 0,
-            repeatType: "reverse"
+          initial={{ width: "0rem", opacity: 0.8, y: 0 }}
+          animate={isAnimating ? {
+            width: ["0rem", "30rem", "0rem"],
+            opacity: [1, 1, 0],
+            y: [0, -10, 0], // this animates translateY
+          } : {
+            width: [0],
+            opacity: [0],
+            y: [0], // this animates translateY
           }}
-          className="absolute inset-auto z-30 h-36 w-64 -translate-y-[10rem] rounded-full bg-gradient-to-r from-blue-400 to-red-500 blur-2xl"
+          transition={{
+            duration: 2,
+            ease: "easeInOut",
+            repeat: Infinity,
+            repeatType: "loop",
+          }}
+          className="absolute inset-auto z-30 h-36 w-64 -translate-y-[10rem] rounded-full bg-[linear-gradient(to_right,_#0f81e6,_#a45fcb,_#c04852)] blur-2xl"
         ></motion.div>
         <motion.div
           initial={{ width: "15rem" }}

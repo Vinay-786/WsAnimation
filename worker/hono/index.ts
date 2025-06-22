@@ -11,7 +11,7 @@ export const app = new Hono()
       return {
         onMessage(event, ws) {
           const data = JSON.parse(event.data)
-          console.log(data.payload)
+          // console.log(data.payload)
           ws.send(JSON.stringify({
             type: 'message',
             payload: data.payload,

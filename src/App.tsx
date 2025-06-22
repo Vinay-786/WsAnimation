@@ -9,6 +9,7 @@ function App() {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
+    // Generate client ID BEFORE creating WebSocket connection
     const id = Math.floor(Math.random() * 1000);
     setClientId(id);
     
@@ -23,6 +24,7 @@ function App() {
     websocket.onmessage = (evt) => {
       const data = JSON.parse(evt.data);
       console.log('Received message:', data);
+      // Use the id variable directly instead of clientId state
       if (data.clientId === id) {
         console.log('Matching client ID, updating wsResponse to:', data.payload);
         setwsResponse(data.payload)
@@ -46,18 +48,30 @@ function App() {
       ws.send(JSON.stringify({
         type: 'message',
         payload: status,
-        clientId: clientId
+        clientId: clientId,
+        timestamp: Date.now()
       }));
+      console.log('Sent message:', status, 'at', new Date().toLocaleTimeString());
     } else {
       console.log('WebSocket not ready or clientId not set');
     }
   };
 
+  // Continuous message sending with setInterval
   useEffect(() => {
+    let intervalId: any
     if (isConnected && clientId !== null) {
       sendMessage(AnimationStatus);
+      intervalId = setInterval(() => {
+        sendMessage(AnimationStatus);
+      }, 1000);
     }
-  }, [AnimationStatus, isConnected, clientId]);
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [AnimationStatus, isConnected, clientId, ws]);
 
   return (
     <div>
@@ -84,10 +98,13 @@ function App() {
       {/* Lamp component with controlled animation */}
       <LampContainer isAnimating={wsResponse}>
         <h1 className="text-4xl font-bold text-white text-center">
-          Lamp Animation Demo
+          Websocket Lamp Animation
         </h1>
         <p className="text-gray-300 text-center mt-4">
           Use the toggle button to control the animation
+        </p>
+        <p className="text-gray-500 text-center mt-4">
+          Check console for continuous server response
         </p>
       </LampContainer>
     </div>
