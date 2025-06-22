@@ -1,56 +1,66 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import cloudflareLogo from './assets/Cloudflare_Logo.svg'
+import { useEffect, useState } from 'react'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
-  const [name, setName] = useState('unknown')
+  const [messages, setMessages] = useState<string[]>([]);
+  const [ws, setWs] = useState<WebSocket>();
+  const [message, setMessage] = useState('');
+  const [clientId, setClientId] = useState<number>();
+
+  useEffect(() => {
+    const websocket = new WebSocket('/ws');
+
+    websocket.onopen = () => {
+      console.log('WebSocket is connected');
+      const id = Math.floor(Math.random() * 1000);
+      setClientId(id);
+    };
+
+    websocket.onmessage = (evt) => {
+      try {
+        const data = JSON.parse(evt.data);
+        setMessages((prevMessages) => [...prevMessages, data.payload]);
+      } catch {
+        setMessages((prevMessages) => [...prevMessages, evt.data]);
+      }
+    };
+
+    websocket.onclose = () => {
+      console.log('WebSocket is closed');
+    };
+    setWs(websocket);
+    return () => {
+      websocket.close();
+    };
+  }, []);
+
+  const sendMessage = () => {
+    if (ws) {
+      ws.send(JSON.stringify({
+        type: 'message',
+        payload: message,
+        clientId: clientId
+      }));
+      setMessage('');
+    }
+  };
+
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setMessage(event.target.value);
+  };
+
 
   return (
     <>
       <div>
-        <a href='https://vite.dev' target='_blank'>
-          <img src={viteLogo} className='logo' alt='Vite logo' />
-        </a>
-        <a href='https://react.dev' target='_blank'>
-          <img src={reactLogo} className='logo react' alt='React logo' />
-        </a>
-        <a href='https://workers.cloudflare.com/' target='_blank'>
-          <img src={cloudflareLogo} className='logo cloudflare' alt='Cloudflare logo' />
-        </a>
-      </div>
-      <h1>Vite + React + Cloudflare</h1>
-      <div className='card'>
-        <button
-          onClick={() => setCount((count) => count + 1)}
-          aria-label='increment'
-        >
-          count is {count}
+        {messages.map((message, index) =>
+          <p key={index}>{message}</p>)}
+        <input type="text" value={message}
+          onChange={handleInputChange} />
+        <button onClick={sendMessage}>
+          Send Message
         </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
       </div>
-      <div className='card'>
-        <button
-          onClick={() => {
-            fetch('/api/')
-              .then((res) => res.json() as Promise<{ name: string }>)
-              .then((data) => setName(data.name))
-          }}
-          aria-label='get name'
-        >
-          Name from API is: {name}
-        </button>
-        <p>
-          Edit <code>worker/index.ts</code> to change the name
-        </p>
-      </div>
-      <p className='read-the-docs'>
-        Click on the Vite and React logos to learn more
-      </p>
     </>
   )
 }
